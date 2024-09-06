@@ -1,132 +1,133 @@
-var rp = require('request-promise')
-var fs = require('fs')
+var rp = require("request-promise");
+var fs = require("fs");
 
-function Client (authToken) {
+function Client(authToken) {
   // internal
   var generateUrl = function (endpoint) {
-    return 'https://api.docparser.com/v1/' + endpoint
-  }
+    return "https://api.docparser.com/v1/" + endpoint;
+  };
 
   var parseJson = function (body, response, resolveWithFullResponse) {
-      return JSON.parse(body)
-  }
+    return JSON.parse(body);
+  };
 
   this.httpClient = rp.defaults({
-    headers: {
-      'api_key': authToken
+    auth: {
+      username: authToken,
+      password: "",
     },
     transform: parseJson,
-    transform2xxOnly: true
-  })
+    transform2xxOnly: true,
+  });
 
   // api methods
   this.ping = function () {
-    return this.httpClient.get(generateUrl('ping'))
-  }
+    return this.httpClient.get(generateUrl("ping"));
+  };
 
   this.getParsers = function () {
-    return this.httpClient.get(generateUrl('parsers'))
-  }
+    return this.httpClient.get(generateUrl("parsers"));
+  };
 
   this.getParserModelLayouts = function (parserId) {
-    return this.httpClient.get(generateUrl('parser/models/' + parserId));
-  }
+    return this.httpClient.get(generateUrl("parser/models/" + parserId));
+  };
 
   this.fetchDocumentFromURL = function (parserId, remoteURL, options) {
-    var endpoint = generateUrl('document/fetch/' + parserId)
+    var endpoint = generateUrl("document/fetch/" + parserId);
     var request = {
-      url: remoteURL
-    }
+      url: remoteURL,
+    };
 
     if (options === undefined) {
-      options = {}
+      options = {};
     }
 
     if (options.remote_id) {
-      request.remote_id = options.remote_id
+      request.remote_id = options.remote_id;
     }
 
     return this.httpClient.post({
       url: endpoint,
-      formData: request
-    })
-  }
+      formData: request,
+    });
+  };
 
   this.uploadFileByPath = function (parserId, filePath, options) {
     // check file existence
     if (fs.existsSync(filePath)) {
       // create read stream
-      var stream = fs.createReadStream(filePath)
+      var stream = fs.createReadStream(filePath);
       // upload using uploadFileByStream method
-      return this.uploadFileByStream(parserId, stream, options)
+      return this.uploadFileByStream(parserId, stream, options);
     }
-  }
+  };
 
   this.uploadFileByStream = function (parserId, stream, options) {
-    var endpoint = generateUrl('document/upload/' + parserId)
+    var endpoint = generateUrl("document/upload/" + parserId);
     var request = {
       file: {
         value: stream,
         options: {
-          filename: null
-        }
-      }
-    }
+          filename: null,
+        },
+      },
+    };
 
     if (options === undefined) {
-      options = {}
+      options = {};
     }
 
     if (options.remote_id) {
-      request.remote_id = options.remote_id
+      request.remote_id = options.remote_id;
     }
 
     if (options.filename) {
-      request.file.options.filename = options.filename
+      request.file.options.filename = options.filename;
     }
 
     return this.httpClient.post({
       url: endpoint,
-      formData: request
-    })
-  }
+      formData: request,
+    });
+  };
 
   this.getResultsByDocument = function (parserId, documentId, options) {
-    var endpoint = generateUrl('results/' + parserId + '/' + documentId)
+    var endpoint = generateUrl("results/" + parserId + "/" + documentId);
 
     if (options === undefined) {
-      options = {}
+      options = {};
     }
 
     if (!options.format) {
-      options.format = 'object'
+      options.format = "object";
     }
 
     return this.httpClient.get({
       url: endpoint,
-      qs: options
-    })
-  }
+      qs: options,
+    });
+  };
 
   this.getResultsByParser = function (parserId, options) {
-    var endpoint = generateUrl('results/' + parserId)
+    var endpoint = generateUrl("results/" + parserId);
 
     if (options === undefined) {
-      options = {}
+      options = {};
     }
 
     if (!options.format) {
-      options.format = 'object'
+      options.format = "object";
     }
 
     return this.httpClient.get({
       url: endpoint,
-      qs: options
-    })
-  }
+      qs: options,
+    });
+  };
 
   // constructor
-  this.authToken = authToken
+  this.authToken = authToken;
 }
 
-module.exports.Client = Client
+module.exports.Client = Client;
